@@ -148,6 +148,8 @@ main {
     padding: 1.25rem;
     border: 1px solid #e9ecef;
     transition: box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
 }
 
 .product-card:hover {
@@ -178,13 +180,20 @@ main {
     color: #212529;
 }
 
-.product-card .category, .product-card .stock {
+.product-card .category {
     font-size: 0.8rem;
     color: #6c757d;
+    margin-bottom: 0.25rem;
+}
+
+.product-card .stock {
+    font-size: 0.8rem;
+    color: #198754;
+    margin-bottom: 0.75rem;
 }
 
 .product-card .btn {
-    margin-top: 1rem;
+    margin-top: auto;
     width: 100%;
     text-align: center;
 }

@@ -75,7 +75,7 @@ require_once 'config/database.php';
     </main>
 
     <footer>
-        <p>&copy; 2026 TechStore</p>
+        <p>&copy; 2026 TechStore — Site vulnérable à but pédagogique</p>
         
     </footer>
 </body>
