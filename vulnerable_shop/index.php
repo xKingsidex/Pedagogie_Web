@@ -11,14 +11,14 @@ require_once 'config/database.php';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VulnShop - Boutique en ligne</title>
+    <title>TechStore - Boutique en ligne</title>
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
     <header>
         <nav>
             <div class="logo">
-                <a href="index.php">VulnShop</a>
+                <a href="index.php">TechStore</a>
             </div>
             <ul class="nav-links">
                 <li><a href="index.php">Accueil</a></li>
@@ -40,7 +40,7 @@ require_once 'config/database.php';
 
     <main>
         <section class="hero">
-            <h1>Bienvenue sur VulnShop</h1>
+            <h1>Bienvenue sur TechStore</h1>
             <p>Votre boutique high-tech en ligne</p>
 
             <!-- VULNÉRABILITÉ XSS: Le paramètre search est affiché sans échappement -->
@@ -75,8 +75,8 @@ require_once 'config/database.php';
     </main>
 
     <footer>
-        <p>&copy; 2024 VulnShop - Site de démonstration cybersécurité</p>
-        <p class="warning">ATTENTION: Ce site contient des vulnérabilités intentionnelles à des fins éducatives</p>
+        <p>&copy; 2026 TechStore</p>
+        
     </footer>
 </body>
 </html>

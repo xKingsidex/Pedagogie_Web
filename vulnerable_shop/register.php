@@ -39,13 +39,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inscription - VulnShop</title>
+    <title>Inscription - TechStore</title>
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
     <header>
         <nav>
-            <div class="logo"><a href="index.php">VulnShop</a></div>
+            <div class="logo"><a href="index.php">TechStore</a></div>
             <ul class="nav-links">
                 <li><a href="index.php">Accueil</a></li>
                 <li><a href="products.php">Produits</a></li>
@@ -93,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </main>
 
     <footer>
-        <p>&copy; 2024 VulnShop - Site de démonstration cybersécurité</p>
+        <p>&copy; 2026 TechStore</p>
     </footer>
 </body>
 </html>
