@@ -188,7 +188,7 @@ $products_result = mysqli_query($conn, "SELECT * FROM products");
     </main>
 
     <footer>
-        <p>&copy; 2026 TechStore</p>
+        <p>&copy; 2026 TechStore — Site vulnérable à but pédagogique</p>
     </footer>
 </body>
 </html>
