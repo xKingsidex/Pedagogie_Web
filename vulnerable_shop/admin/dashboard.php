@@ -72,13 +72,13 @@ $products_result = mysqli_query($conn, "SELECT * FROM products");
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - VulnShop</title>
+    <title>Admin Dashboard - TechStore</title>
     <link rel="stylesheet" href="../assets/css/style.css">
 </head>
 <body>
     <header class="admin-header">
         <nav>
-            <div class="logo"><a href="../index.php">VulnShop</a> - <span>Admin</span></div>
+            <div class="logo"><a href="../index.php">TechStore</a> - <span>Admin</span></div>
             <ul class="nav-links">
                 <li><a href="../index.php">Site</a></li>
                 <li><a href="dashboard.php">Dashboard</a></li>
@@ -188,7 +188,7 @@ $products_result = mysqli_query($conn, "SELECT * FROM products");
     </main>
 
     <footer>
-        <p>&copy; 2024 VulnShop Admin - Site de démonstration cybersécurité</p>
+        <p>&copy; 2026 TechStore</p>
     </footer>
 </body>
 </html>

@@ -52,13 +52,13 @@ $comments_result = mysqli_query($conn, $comments_query);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $product['name']; ?> - VulnShop</title>
+    <title><?php echo $product['name']; ?> - TechStore</title>
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
     <header>
         <nav>
-            <div class="logo"><a href="index.php">VulnShop</a></div>
+            <div class="logo"><a href="index.php">TechStore</a></div>
             <ul class="nav-links">
                 <li><a href="index.php">Accueil</a></li>
                 <li><a href="products.php">Produits</a></li>
@@ -135,7 +135,7 @@ $comments_result = mysqli_query($conn, $comments_query);
     </main>
 
     <footer>
-        <p>&copy; 2024 VulnShop - Site de démonstration cybersécurité</p>
+        <p>&copy; 2026 TechStore</p>
     </footer>
 </body>
 </html>
