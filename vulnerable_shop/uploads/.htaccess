@@ -1,0 +1,3 @@
+# VULNÉRABILITÉ INTENTIONNELLE: Exécution PHP autorisée dans le dossier uploads
+# En production, ceci devrait être désactivé
+Options +Indexes
