@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } else {
         // VULNÉRABILITÉ: Message d'erreur trop précis
         $check_user = mysqli_query($conn, "SELECT * FROM users WHERE username='$username'");
-        if (mysqli_num_rows($check_user) == 0) {
+        if ($check_user && mysqli_num_rows($check_user) == 0) {
             $error = "L'utilisateur '$username' n'existe pas";
         } else {
             $error = "Mot de passe incorrect pour '$username'";

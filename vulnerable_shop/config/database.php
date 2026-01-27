@@ -4,6 +4,9 @@
  * ATTENTION: Ce fichier contient des vulnérabilités INTENTIONNELLES à des fins éducatives
  */
 
+// Désactiver les exceptions mysqli pour permettre les injections SQL sans crash
+mysqli_report(MYSQLI_REPORT_OFF);
+
 $host = 'localhost';
 $dbname = 'vulnerable_shop';
 $username = 'root';

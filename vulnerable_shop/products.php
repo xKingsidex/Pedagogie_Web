@@ -30,8 +30,6 @@ if (!empty($category)) {
 // VULNÉRABILITÉ: Injection SQL via ORDER BY
 $query .= " ORDER BY $sort";
 
-// Désactiver les exceptions mysqli pour permettre XSS même si SQL échoue
-mysqli_report(MYSQLI_REPORT_OFF);
 $result = mysqli_query($conn, $query);
 
 // VULNÉRABILITÉ: Affichage d'erreur SQL détaillée
