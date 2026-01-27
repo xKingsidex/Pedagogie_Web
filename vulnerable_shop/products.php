@@ -30,12 +30,13 @@ if (!empty($category)) {
 // VULNÉRABILITÉ: Injection SQL via ORDER BY
 $query .= " ORDER BY $sort";
 
+// Désactiver les exceptions mysqli pour permettre XSS même si SQL échoue
+mysqli_report(MYSQLI_REPORT_OFF);
 $result = mysqli_query($conn, $query);
 
 // VULNÉRABILITÉ: Affichage d'erreur SQL détaillée
 if (!$result) {
-    echo "<div class='error'>Erreur SQL: " . mysqli_error($conn) . "</div>";
-    echo "<!-- Query: $query -->";
+    $sql_error = mysqli_error($conn);
 }
 ?>
 <!DOCTYPE html>
@@ -93,6 +94,10 @@ if (!$result) {
             <?php if(!empty($search)): ?>
                 <!-- VULNÉRABILITÉ XSS: Affichage direct du terme de recherche -->
                 <p class="search-result">Résultats pour: <strong><?php echo $search; ?></strong></p>
+            <?php endif; ?>
+
+            <?php if(isset($sql_error) && $sql_error): ?>
+                <div class="error">Erreur SQL: <?php echo $sql_error; ?></div>
             <?php endif; ?>
 
             <div class="products-grid">
