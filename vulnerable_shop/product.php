@@ -43,9 +43,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['comment'])) {
     }
 }
 
-// Récupérer les commentaires
-$comments_query = "SELECT c.*, u.username FROM comments c JOIN users u ON c.user_id = u.id WHERE c.product_id = $id ORDER BY c.created_at DESC";
-$comments_result = mysqli_query($conn, $comments_query);
+// Récupérer les commentaires (seulement si id est numérique)
+$comments_result = false;
+if (is_numeric($_GET['id'])) {
+    $comments_query = "SELECT c.*, u.username FROM comments c JOIN users u ON c.user_id = u.id WHERE c.product_id = " . intval($_GET['id']) . " ORDER BY c.created_at DESC";
+    $comments_result = mysqli_query($conn, $comments_query);
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr">
