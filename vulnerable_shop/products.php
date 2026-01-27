@@ -18,8 +18,8 @@ $sort = isset($_GET['sort']) ? $_GET['sort'] : 'name';
 $query = "SELECT * FROM products WHERE 1=1";
 
 if (!empty($search)) {
-    // VULNÉRABILITÉ: Injection SQL via search
-    $query .= " AND (name LIKE '%$search%' OR description LIKE '%$search%')";
+    // VULNÉRABILITÉ: Injection SQL via search (simplifié pour démonstration)
+    $query .= " AND name = '$search'";
 }
 
 if (!empty($category)) {
