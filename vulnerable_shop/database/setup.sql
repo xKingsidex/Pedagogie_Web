@@ -60,11 +60,12 @@ CREATE TABLE IF NOT EXISTS messages (
 -- =====================================================
 
 -- Utilisateurs (mots de passe en MD5 - VULNÉRABILITÉ)
--- admin:admin123 | user1:password | user2:123456
+-- admin:admin123 | user1:password | user2:123456 | test:motdepasse123 (EN CLAIR!)
 INSERT INTO users (username, password, email, role) VALUES
 ('admin', '0192023a7bbd73250516f069df18b500', 'admin@shop.local', 'admin'),
 ('user1', '5f4dcc3b5aa765d61d8327deb882cf99', 'user1@test.com', 'user'),
-('user2', 'e10adc3949ba59abbe56e057f20f883e', 'user2@test.com', 'user');
+('user2', 'e10adc3949ba59abbe56e057f20f883e', 'user2@test.com', 'user'),
+('test', 'motdepasse123', 'test@test.com', 'user');
 
 -- Produits
 INSERT INTO products (name, description, price, stock, category) VALUES
