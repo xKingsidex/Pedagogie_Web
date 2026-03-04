@@ -54,9 +54,14 @@ if (!$result) {
                 <li><a href="products.php">Produits</a></li>
                 <?php if(isset($_SESSION['user_id'])): ?>
                     <li><a href="orders.php">Mes Commandes</a></li>
-                    <li><a href="logout.php">Déconnexion</a></li>
+                    <li><a href="profile.php">Profil</a></li>
+                    <?php if(isset($_SESSION['role']) && $_SESSION['role'] == 'admin'): ?>
+                        <li><a href="admin/dashboard.php" class="admin-link">Admin</a></li>
+                    <?php endif; ?>
+                    <li><a href="logout.php">Déconnexion (<?php echo $_SESSION['username']; ?>)</a></li>
                 <?php else: ?>
                     <li><a href="login.php">Connexion</a></li>
+                    <li><a href="register.php">Inscription</a></li>
                 <?php endif; ?>
             </ul>
         </nav>

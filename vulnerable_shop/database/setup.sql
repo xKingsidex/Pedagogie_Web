@@ -63,15 +63,15 @@ INSERT INTO users (username, password, email, role) VALUES
 -- PRODUITS
 -- =====================================================
 
-INSERT INTO products (name, description, price, stock, category) VALUES
-('Laptop Pro X1', 'Ordinateur portable haute performance', 1299.99, 15, 'informatique'),
-('Smartphone Galaxy', 'Smartphone dernière génération', 899.99, 30, 'telephonie'),
-('Casque Audio BT', 'Casque Bluetooth réduction de bruit', 199.99, 50, 'audio'),
-('Clavier Mécanique', 'Clavier gaming RGB', 129.99, 25, 'informatique'),
-('Souris Gaming', 'Souris gaming 16000 DPI', 79.99, 40, 'informatique'),
-('Tablette Tab S8', 'Tablette 11 pouces 128Go', 649.99, 20, 'telephonie'),
-('Enceinte Portable', 'Enceinte Bluetooth 20W', 89.99, 35, 'audio'),
-('Webcam HD', 'Webcam 1080p avec micro', 59.99, 45, 'informatique');
+INSERT INTO products (name, description, price, stock, image, category) VALUES
+('Laptop Pro X1', 'Ordinateur portable haute performance', 1299.99, 15, 'laptop.jpg', 'informatique'),
+('Smartphone Galaxy', 'Smartphone dernière génération', 899.99, 30, 'smartphone.jpg', 'telephonie'),
+('Casque Audio BT', 'Casque Bluetooth réduction de bruit', 199.99, 50, 'casque.png', 'audio'),
+('Clavier Mécanique', 'Clavier gaming RGB', 129.99, 25, 'clavier.jpg', 'informatique'),
+('Souris Gaming', 'Souris gaming 16000 DPI', 79.99, 40, 'souris.jpg', 'informatique'),
+('Tablette Tab S8', 'Tablette 11 pouces 128Go', 649.99, 20, 'tablette.jpg', 'telephonie'),
+('Enceinte Portable', 'Enceinte Bluetooth 20W', 89.99, 35, 'enceinte.jpg', 'audio'),
+('Webcam HD', 'Webcam 1080p avec micro', 59.99, 45, 'webcam.jpg', 'informatique');
 
 -- =====================================================
 -- COMMANDES
